@@ -77,18 +77,35 @@ sparcs.count=function(yrs,fun){
 
 //// command line interpreter///
 sparcs.exe = function(){
-    console.log('evaluating at '+Date())
-    sparcs.exe.log = sparcs.exe.log || ' > ' // start log if it doesn't exist
+    sparcs.exe.log = sparcs.exe.log || [' > '] // start log if it doesn't exist
 
-    4
-
-
+    // compare entries and start evaluating them from last change
+    var i = sparcs.exe.i
+    sparcs.exe.i++
+    if(i<sparcs.exe.log.length){
+        console.log(i+') at '+Date())
+        if(sparcs.exe.log[i]!==sparcs.exe.newLog[i]){
+            sparcs.exe.eval=true
+        }
+        if(sparcs.exe.eval){
+            console.log('EVAL')
+        }
+        sparcs.exe()
+    }else{
+        if(sparcs.exe.newLog.slice(-1)[0]==" >  > "){ // middle insertion
+            sparcs.exe.newLog.slice(-1)[0]=" > "
+            cmd.value=cmd.value.slice(0,-3)
+        }
+        sparcs.exe.log=sparcs.exe.newLog
+    }
 }
 
 cmd.onkeyup=function(ev){
     if((ev.keyCode==13)&&(!ev.shiftKey)){ // enter was pressed without shift
         this.value+=' > '
         sparcs.exe.newLog=this.value.split('\n')
+        sparcs.exe.i=0 // reset interpretation before starting it
+        sparcs.exe.eval=false
         sparcs.exe() // evaluate command
     }
 }
