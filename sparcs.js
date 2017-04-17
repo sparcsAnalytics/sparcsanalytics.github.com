@@ -1,68 +1,97 @@
 console.log('sparcs.js loaded ...');
 
-sparcs=(function(){
-    var sprc={}
-    // root URI for https://health.data.ny.gov/resource/s8d9-z734.json etc 
-    sprc.uri = 'health.data.ny.gov'
-    sprc.yrs = [2009,2010,2011,2012,2013,2014]
+//sparcs=(function(){
+var sparcs={}
+// root URI for https://health.data.ny.gov/resource/s8d9-z734.json etc 
+sparcs.uri = 'health.data.ny.gov'
+sparcs.yrs = [2009,2010,2011,2012,2013,2014]
 
-    // data resources
-    sprc.res={}
-    sprc.res[2009]="s8d9-z734"
-    sprc.res[2010]="dpew-wqcg"
-    sprc.res[2011]="n5y9-zanf"
-    sprc.res[2012]="rv8x-4fm3"
-    sprc.res[2013]="tdf6-7fpk"
-    sprc.res[2014]="pzzw-8zdv"
+// data resources
+sparcs.res={}
+sparcs.res[2009]="s8d9-z734"
+sparcs.res[2010]="dpew-wqcg"
+sparcs.res[2011]="n5y9-zanf"
+sparcs.res[2012]="rv8x-4fm3"
+sparcs.res[2013]="tdf6-7fpk"
+sparcs.res[2014]="pzzw-8zdv"
 
 
-    // data sources
-    sprc.dt={}
-    sprc.yrs.forEach(function(yr){
-        sprc.dt['url'+yr]='https://'+sprc.uri+'/resource/'+sprc.res[yr]+'.json'
+// data sources
+sparcs.dtSrc={}
+sparcs.yrs.forEach(function(yr){
+    sparcs.dtSrc['url'+yr]='https://'+sparcs.uri+'/resource/'+sparcs.res[yr]+'.json'
+})
+/*
+sparcs.dt.url2009="https://health.data.ny.gov/resource/s8d9-z734.json"
+sparcs.dt.url2010="https://health.data.ny.gov/resource/dpew-wqcg.json"
+sparcs.dt.url2011="https://health.data.ny.gov/resource/n5y9-zanf.json"
+sparcs.dt.url2012="https://health.data.ny.gov/resource/rv8x-4fm3.json"
+sparcs.dt.url2013="https://health.data.ny.gov/resource/tdf6-7fpk.json"
+sparcs.dt.url2014="https://health.data.ny.gov/resource/pzzw-8zdv.json"
+*/
+
+// SODA readers
+
+sparcs.sodaRead= new soda.Consumer(sparcs.uri)
+
+4
+
+// get 
+sparcs.get=function(q,yr){
+    if(!yr){
+        yr=Object.getOwnPropertyNames(sparcs.dtSrc)
+    }
+    if(!Array.isArray(yr)){
+        yr=[yr]
+    }
+    // handle year provided as number
+    yr=yr.map(function(yi){
+        if(typeof(yi)=="number"){yi="url"+yi}
+        return yi
     })
-    /*
-    sprc.dt.url2009="https://health.data.ny.gov/resource/s8d9-z734.json"
-    sprc.dt.url2010="https://health.data.ny.gov/resource/dpew-wqcg.json"
-    sprc.dt.url2011="https://health.data.ny.gov/resource/n5y9-zanf.json"
-    sprc.dt.url2012="https://health.data.ny.gov/resource/rv8x-4fm3.json"
-    sprc.dt.url2013="https://health.data.ny.gov/resource/tdf6-7fpk.json"
-    sprc.dt.url2014="https://health.data.ny.gov/resource/pzzw-8zdv.json"
-    */
+}
 
-    // SODA readers
+sparcs.count=function(yrs,fun){
+    yrs = yrs || sparcs.yrs
+    if(typeof(yrs)=="number"){yrs=[yrs]} // making sure it is an Array
+    var count={}
+    console.log('number of entries for years ',yrs)
+    yrs.forEach(function(yr){
+        $.getJSON(sparcs.dtSrc['url'+yr]+'?$query=SELECT%20COUNT(*)')
+         .then(function(c){
+             c[0].COUNT=parseInt(c[0].COUNT)
+                 console.log(yr,c[0].COUNT)
+             count[yr]=c[0].COUNT
+             // have some fun if done
+             if(Object.getOwnPropertyNames(count).length==yrs.length){
+                 console.log('done:')
+                 fun = fun || function(){console.log(count)}
+                 fun()
+             }
+         })
+    })
+    return count
+    //https://health.data.ny.gov/resource/s8d9-z734.json?$query=SELECT%20COUNT(*)
 
-    sprc.sodaRead= new soda.Consumer(sprc.uri)
+}
+
+//// command line interpreter///
+sparcs.exe = function(){
+    console.log('evaluating at '+Date())
+    sparcs.exe.log = sparcs.exe.log || ' > ' // start log if it doesn't exist
 
     4
 
-    // get 
-    sprc.get=function(q,yr){
-        if(!yr){
-            yr=Object.getOwnPropertyNames(sprc.dt)
-        }
-        if(!Array.isArray(yr)){
-            yr=[yr]
-        }
-        // handle year provided as number
-        yr=yr.map(function(yi){
-            if(typeof(yi)=="number"){yi="url"+yi}
-            return yi
-        })
 
-        4
+}
 
+cmd.onkeyup=function(ev){
+    if((ev.keyCode==13)&&(!ev.shiftKey)){ // enter was pressed without shift
+        this.value+=' > '
+        sparcs.exe.newLog=this.value.split('\n')
+        sparcs.exe() // evaluate command
     }
-
-    
-    // ref SODA API
-    // https://dev.socrata.com/docs/queries/
-    // 
-
-
-    return sprc
-})()
-
+}
 
 
 // CSS
